@@ -25,7 +25,10 @@ type TableDetail = {
 
 export default function SqlBuilderPage() {
   const [tables, setTables] = useState<TableSummary[]>([]);
-  const [baseTable, setBaseTable] = useState<string>("INVOICE");
+  const [baseTable, setBaseTable] = useState<string>(() => {
+    if (typeof window === "undefined") return "INVOICE";
+    return new URLSearchParams(window.location.search).get("table") ?? "INVOICE";
+  });
   const [detail, setDetail] = useState<TableDetail | null>(null);
   const [joinTable, setJoinTable] = useState<string>("");
   const [joinedTables, setJoinedTables] = useState<Array<{ tableName: string; condition: string; alias: string; fields: TableField[] }>>([]);
@@ -47,12 +50,6 @@ export default function SqlBuilderPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const table = new URLSearchParams(window.location.search).get("table");
-    if (table) setBaseTable(table);
   }, []);
 
   useEffect(() => {
@@ -108,7 +105,7 @@ export default function SqlBuilderPage() {
       : template === "count"
         ? "COUNT(*) AS row_count"
         : "t.*";
-    const joinClauses = joinedTables.map((join, idx) => {
+    const joinClauses = joinedTables.map((join) => {
       return `LEFT JOIN ${join.tableName} ${join.alias} ON ${join.condition.replace(/\b[a-z]\./g, (m) => (m === "t." ? "t." : `${join.alias}.`))}`;
     });
 

@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const base = path.join(process.cwd(), 'public', 'data_dictionary653', 'data_dictionary', 'data_dict');
 const indexPath = path.join(process.cwd(), 'data', 'data-dictionary-index.json');

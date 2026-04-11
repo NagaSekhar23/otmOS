@@ -1,17 +1,26 @@
-const DEFAULT_REMOTE_BASE = "http://136.114.93.164:4010/api";
-const DEFAULT_REMOTE_TOKEN = "RXDhRkOEosUUzc3U7Cg2AajpeiluuMmH";
+function getRequiredEnv(name: "QA_RUNNER_BASE_URL" | "QA_RUNNER_TOKEN") {
+  const value = process.env[name]?.trim();
+  return value && value.length > 0 ? value : "";
+}
 
 export function getQaRunnerBase() {
-  return (process.env.QA_RUNNER_BASE_URL ?? DEFAULT_REMOTE_BASE).trim();
+  return getRequiredEnv("QA_RUNNER_BASE_URL");
 }
 
 export function getQaRunnerToken() {
-  return (process.env.QA_RUNNER_TOKEN ?? DEFAULT_REMOTE_TOKEN).trim();
+  return getRequiredEnv("QA_RUNNER_TOKEN");
 }
 
 export async function qaRunnerFetch(path: string, init?: RequestInit) {
   const base = getQaRunnerBase().replace(/\/$/, "");
   const token = getQaRunnerToken();
+
+  if (!base) {
+    return new Response(JSON.stringify({ error: "QA runner is not configured on the server." }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
   const headers = new Headers(init?.headers ?? {});
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (!headers.has("Content-Type") && init?.body) headers.set("Content-Type", "application/json");

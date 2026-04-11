@@ -80,22 +80,21 @@ export default function DatabaseTableExplorerPage() {
 
   const favorites = useMemo(() => tables.filter((table) => favoriteTables.includes(table.tableName)).slice(0, 10), [tables]);
 
-  useEffect(() => {
-    if (!filteredTables.length) return;
-    if (!selectedTable || !filteredTables.some((t) => t.tableName === selectedTable)) {
-      setSelectedTable(filteredTables[0].tableName);
-    }
+  const effectiveSelectedTable = useMemo(() => {
+    if (!filteredTables.length) return "";
+    if (selectedTable && filteredTables.some((t) => t.tableName === selectedTable)) return selectedTable;
+    return filteredTables[0].tableName;
   }, [filteredTables, selectedTable]);
 
   useEffect(() => {
     let cancelled = false;
     async function loadDetail() {
-      if (!selectedTable) {
+      if (!effectiveSelectedTable) {
         setDetail(null);
         return;
       }
       try {
-        const res = await fetch(`/api/database/tables?table=${encodeURIComponent(selectedTable)}`);
+        const res = await fetch(`/api/database/tables?table=${encodeURIComponent(effectiveSelectedTable)}`);
         const data = (await res.json()) as TableDetail & { error?: string };
         if (cancelled) return;
         if ((data as { error?: string }).error) {
@@ -111,7 +110,7 @@ export default function DatabaseTableExplorerPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedTable]);
+  }, [effectiveSelectedTable]);
 
   useEffect(() => {
     let cancelled = false;
@@ -233,7 +232,7 @@ export default function DatabaseTableExplorerPage() {
           <input className="input" style={{ marginTop: 12 }} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search table name" />
           <div className="listStack" style={{ marginTop: 12, maxHeight: "75vh", overflowY: "auto" }}>
             {filteredTables.map((table) => (
-              <button key={table.tableName} className={`listItem ${selectedTable === table.tableName ? "selected" : ""}`} onClick={() => setSelectedTable(table.tableName)}>
+              <button key={table.tableName} className={`listItem ${effectiveSelectedTable === table.tableName ? "selected" : ""}`} onClick={() => setSelectedTable(table.tableName)}>
                 {table.tableName}
               </button>
             ))}
