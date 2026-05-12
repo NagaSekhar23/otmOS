@@ -1,6 +1,44 @@
-export type EdiExplainRow = { segIndex: number; segment: string; pos: number; value: string; meaning: string; notes: string; source: string };
-export type EdiMapping = { id: string; version: string; txSet: string; carrier: string; segment: string; elementPos: number; code: string; meaning: string; notes: string; source: string };
-export type EdiDoc = { id: string; sourceName: string; status: string; snippetPreview: string; chunkCount: number; charCount: number; createdAt: string };
+export type EdiExplainRow = {
+  segIndex: number;
+  segment: string;
+  pos: number;
+  value: string;
+  meaning: string;
+  notes: string;
+  source: string;
+  loop?: string;
+  segmentName?: string;
+  elementName?: string;
+  elementDescription?: string;
+};
+
+export type EdiMapping = {
+  id: string;
+  version: string;
+  txSet: string;
+  carrier: string;
+  segment: string;
+  elementPos: number;
+  code: string;
+  meaning: string;
+  notes: string;
+  source: string;
+};
+
+export type EdiDoc = {
+  id: string;
+  sourceName: string;
+  status: string;
+  snippetPreview: string;
+  chunkCount: number;
+  charCount: number;
+  createdAt: string;
+  txSet?: string;
+  txSets?: string[];
+  carrier?: string;
+  version?: string;
+  detectedTxSets?: string;
+};
 
 function headers() {
   return { "content-type": "application/json" };
