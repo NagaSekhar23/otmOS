@@ -14,7 +14,13 @@ export default function EDIPage() {
   const [carrier, setCarrier] = useState("industry");
   const [elementSep, setElementSep] = useState("*");
   const [segmentTerm, setSegmentTerm] = useState("~");
-  const [x12, setX12] = useState("ISA*00*          *00*          *ZZ*SENDERID       *ZZ*RECEIVERID     *250101*1200*U*00401*000000905*0*T*:~\nGS*SM*SENDER*RECEIVER*20250101*1200*1*X*004010~\nST*204*0001~\nB2**CARRIER*SCAC~\nSE*4*0001~");
+
+  const defaultSamples: Record<string, string> = {
+    "204": "ISA*00*          *00*          *ZZ*PATINDPROD     *02*TQYL           *260512*2051*U*00401*000000533*0*P*>~\nGS*SM*PATINDPROD*TQYL*20260512*2051*441*X*004010~\nST*204*0001~\nB2**TQYL**366120**PP~\nB2A*00~\nL11*1013955*TN~\nG62*64*20260513*I*2051*UT~\nN1*BT*990_107WIN~\nN2*TRANSPORTATION DEPARTMENT~\nN3*107 W. Franklin St.~\nN4*ELKHART*IN*46516~\nG61*IC*TRANSPORTATION DEPARTMENT*TE*5742947511~\nS5*1*CL~\nG62*10*20260512*I*1651*UT~\nAT8*E*L*18306*20**E*1124496~\nN1*SH*170_291941~\nN2*John Gamble~\nN3*29194 Phillips St~\nN4*ELKHART*IN*46514~\nG61*SH*John Gamble*TE*5742624664~\nS5*2*CU~\nG62*68*20260513*Z*1551*UT~\nAT8*E*L*18306*20**E*1124496~\nN1*CN*SCHUL201I1~\nN2*Amy Mude~\nN3*201 Industrial Dr~\nN4*REDWOOD FALLS*MN*56283~\nG61*IC*Amy Mude*TE*5076443555~\nOID*500076***PC*4*L*6252*E*331776~\nL5*076*4 X 8 SKIDS OF PLYWOOD*60.0*N~\nOID*500077***PC*3*L*300*E*25920~\nL5*077*BOXES OF MOLDINGS*70.0*N~\nOID*500078***PC*3*L*1824*E*334800~\nL5*078*CABINET DOORS*92.5*N*PLT~\nOID*500079***PC*10*L*9930*E*432000~\nL5*079*COFFINS OF MOLDINGS*55.0*N~\nL3*18306*N*******1124496*E*20*L~\nSE*36*0001~\nGE*1*441~\nIEA*1*000000533~",
+    "214": "ISA*00*          *00*          *02*RLCA           *ZZ*PATINDPROD     *260512*1902*U*00401*000006045*0*P*>\nGS*QM*RLCA*PATINDPROD*20260512*1902*6045*X*004010\nST*214*0001\nB10*IAG4395357*366102*RLCA*1\nL11*IAG4395357*CN\nL11*1013953*TN\nN1*SH*CUSTOM VINLYS*94*160\nN3*8399 W VANBUREN\nN4*TOLLESON*AZ*85353*USA\nG62*86*20260512*E*153534\nN1*CN*CUSTOM VINLYS*94*161\nN3*13414 SLOVER AVE\nN4*FONTANA*CA*92337*USA\nG62*17*20260513*E*110000\nN1*BT*PATRICK INDUSTRIES*93*PA4651\nN3*107 W FRANKLIN ST\nN4*ELKHART*IN*46516*USA\nLX*1\nAT7*CP*NS***20260512*153534*LT\nMS1*TOLLESON*AZ\nL11*01*QN\nSE*23*0001\nGE*1*6045\nIEA*1*000006045"
+  };
+
+  const [x12, setX12] = useState(defaultSamples["204"]);
   const [rows, setRows] = useState<EdiExplainRow[]>([]);
   const [kbQuery, setKbQuery] = useState("");
   const [kbMappings, setKbMappings] = useState<EdiMapping[]>([]);
@@ -118,6 +124,16 @@ export default function EDIPage() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, [explain, loadKnowledge]);
+
+  // Update sample when transaction type changes
+  useEffect(() => {
+    if (defaultSamples[txSet] && x12 !== defaultSamples[txSet]) {
+      const currentIsSample = Object.values(defaultSamples).some(sample => sample === x12);
+      if (currentIsSample) {
+        setX12(defaultSamples[txSet]);
+      }
+    }
+  }, [txSet]);
 
   return (
     <Shell title="EDI Explainer">

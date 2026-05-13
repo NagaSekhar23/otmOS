@@ -368,6 +368,36 @@ export const TX_214_SEGMENTS: Record<string, EdiSegmentDef> = {
       { pos: 5, name: 'Service Level Code', description: 'Code for service level' },
     ],
   },
+  K1: {
+    segment: 'K1',
+    name: 'Remarks',
+    description: 'Free-form remarks or special instructions',
+    loop: 'Heading',
+    elements: [
+      { pos: 1, name: 'Free-Form Message', description: 'Free-form text message for remarks or instructions' },
+    ],
+  },
+  LX: {
+    segment: 'LX',
+    name: 'Assigned Number',
+    description: 'Reference number or sequence number',
+    loop: 'Detail - Status',
+    elements: [
+      { pos: 1, name: 'Assigned Number', description: 'Sequential or reference number assigned to this detail' },
+    ],
+  },
+  G62: {
+    segment: 'G62',
+    name: 'Date/Time',
+    description: 'Date and/or time, or period of time',
+    loop: 'Name (N1)',
+    elements: [
+      { pos: 1, name: 'Date Qualifier', description: 'Code specifying type of date (86=Ship Not Before, 17=Estimated Delivery, 10=Requested Ship Date)' },
+      { pos: 2, name: 'Date', description: 'Date expressed as CCYYMMDD' },
+      { pos: 3, name: 'Time Qualifier', description: 'Code specifying type of time (E=Estimated)' },
+      { pos: 4, name: 'Time', description: 'Time expressed in 24-hour clock time (HHMMSS)' },
+    ],
+  },
 };
 
 export function getSegmentMetadata(segment: string, txSet: string): EdiSegmentDef | null {
