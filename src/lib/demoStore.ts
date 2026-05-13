@@ -125,13 +125,20 @@ export async function saveStore(store: DemoStore): Promise<void> {
         ON CONFLICT (id)
         DO UPDATE SET data = ${JSON.stringify(store)}::jsonb, updated_at = NOW()
       `;
+      // Successfully saved to Postgres, no need for file system
+      return;
     } catch (error) {
       console.error("Postgres save error:", error);
-      // Continue to save to file system as backup
+      // Continue to file system fallback
     }
   }
 
-  // Always save to file system (local development + backup)
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2));
+  // Fallback to file system (local development only)
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2));
+  } catch (error) {
+    console.error("File system save error (expected in production):", error);
+    // Don't throw - this is expected in read-only production environments
+  }
 }
