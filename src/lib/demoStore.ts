@@ -70,7 +70,7 @@ async function initializeDatabase() {
 
     // Check if we have any data
     const result = await sql`SELECT data FROM otmos_store WHERE id = 1`;
-    if (result.length === 0) {
+    if (Array.isArray(result) && result.length === 0) {
       // Insert default store
       await sql`
         INSERT INTO otmos_store (id, data)
@@ -88,8 +88,11 @@ export async function loadStore(): Promise<DemoStore> {
     try {
       await initializeDatabase();
       const result = await sql`SELECT data FROM otmos_store WHERE id = 1`;
-      if (result.length > 0 && result[0].data) {
-        return result[0].data as DemoStore;
+      if (Array.isArray(result) && result.length > 0) {
+        const row = result[0] as any;
+        if (row && row.data) {
+          return row.data as DemoStore;
+        }
       }
 
       // Initialize with defaults if empty
