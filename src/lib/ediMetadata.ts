@@ -293,6 +293,83 @@ export const TX_204_SEGMENTS: Record<string, EdiSegmentDef> = {
   },
 };
 
+// Transaction Set 214 - Shipment Status
+export const TX_214_SEGMENTS: Record<string, EdiSegmentDef> = {
+  B10: {
+    segment: 'B10',
+    name: 'Beginning Segment for Transportation Carrier Shipment Status Message',
+    description: 'Identifies the beginning of the shipment status transaction',
+    loop: 'Heading',
+    elements: [
+      { pos: 1, name: 'Reference Identification', description: 'Shipment identification number' },
+      { pos: 2, name: 'Shipment Identification Number', description: 'Unique shipment identifier' },
+      { pos: 3, name: 'Standard Carrier Alpha Code', description: 'SCAC of the carrier reporting status' },
+      { pos: 4, name: 'Inquiry Request Number', description: 'Reference number for inquiry' },
+    ],
+  },
+  L11: {
+    segment: 'L11',
+    name: 'Business Instructions and Reference Number',
+    description: 'Reference information for shipment status',
+    loop: 'Heading',
+    elements: [
+      { pos: 1, name: 'Reference Identification', description: 'Reference number' },
+      { pos: 2, name: 'Reference Identification Qualifier', description: 'Code qualifying reference (BM=Bill of Lading, PRO=Progressive Number)' },
+    ],
+  },
+  MS3: {
+    segment: 'MS3',
+    name: 'Interline Information',
+    description: 'Carrier and routing information',
+    loop: 'Heading',
+    elements: [
+      { pos: 1, name: 'Standard Carrier Alpha Code', description: 'SCAC of carrier' },
+      { pos: 2, name: 'Routing Sequence Code', description: 'Routing sequence identifier' },
+      { pos: 3, name: 'City Name', description: 'City name for routing' },
+      { pos: 4, name: 'Standard Point Location Code', description: 'SPLC for location' },
+    ],
+  },
+  AT7: {
+    segment: 'AT7',
+    name: 'Shipment Status Details',
+    description: 'Current status of the shipment',
+    loop: 'Detail - Shipment Status',
+    elements: [
+      { pos: 1, name: 'Shipment Status Code', description: 'Code indicating shipment status (AF=Shipment Accepted, D1=Departed, X3=Arrived at Delivery, OA=Out for Delivery)' },
+      { pos: 2, name: 'Shipment Status or Appointment Reason Code', description: 'Reason for status or appointment' },
+      { pos: 3, name: 'Shipment Appointment Status Code', description: 'Status of appointment' },
+      { pos: 4, name: 'Shipment Status or Appointment Reason Code', description: 'Additional reason code' },
+      { pos: 5, name: 'Date', description: 'Date of status event (CCYYMMDD)' },
+      { pos: 6, name: 'Time', description: 'Time of status event (HHMM or HHMMSS)' },
+      { pos: 7, name: 'Time Code', description: 'Time zone qualifier (LT=Local Time, UT=Universal)' },
+    ],
+  },
+  MS1: {
+    segment: 'MS1',
+    name: 'Equipment, Shipment, or Real Property Location',
+    description: 'Geographic location of equipment or shipment',
+    loop: 'Detail - Shipment Status',
+    elements: [
+      { pos: 1, name: 'City Name', description: 'City where equipment/shipment is located' },
+      { pos: 2, name: 'State or Province Code', description: 'State/province code' },
+      { pos: 3, name: 'Country Code', description: 'Country code' },
+    ],
+  },
+  CD3: {
+    segment: 'CD3',
+    name: 'Carton (Package) Detail',
+    description: 'Package-level detail information',
+    loop: 'Detail - Carton',
+    elements: [
+      { pos: 1, name: 'Weight Qualifier', description: 'Code defining weight type (G=Gross, N=Net)' },
+      { pos: 2, name: 'Weight', description: 'Package weight' },
+      { pos: 3, name: 'Zone', description: 'Zone identifier' },
+      { pos: 4, name: 'Service Standard', description: 'Service level standard' },
+      { pos: 5, name: 'Service Level Code', description: 'Code for service level' },
+    ],
+  },
+};
+
 export function getSegmentMetadata(segment: string, txSet: string): EdiSegmentDef | null {
   // Check envelope segments first
   if (ENVELOPE_SEGMENTS[segment]) {
@@ -302,6 +379,10 @@ export function getSegmentMetadata(segment: string, txSet: string): EdiSegmentDe
   // Check transaction-specific segments
   if (txSet === '204' && TX_204_SEGMENTS[segment]) {
     return TX_204_SEGMENTS[segment];
+  }
+
+  if (txSet === '214' && TX_214_SEGMENTS[segment]) {
+    return TX_214_SEGMENTS[segment];
   }
 
   return null;
