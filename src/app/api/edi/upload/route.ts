@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { loadStore, saveStore } from "@/lib/demoStore";
 // @ts-ignore - pdf-parse doesn't have proper TypeScript definitions
-import pdf from "pdf-parse/lib/pdf-parse.js";
+import pdf from "pdf-parse";
 import mammoth from "mammoth";
 
 function detectTxSetsFromFilename(filename: string): string[] {
