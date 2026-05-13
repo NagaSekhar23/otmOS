@@ -61,7 +61,9 @@ async function extractTextFromFile(file: File, buffer: Buffer): Promise<{ text: 
   if (filename.endsWith('.pdf')) {
     try {
       // Dynamic import to avoid ESM issues
-      const pdfParse = (await import('pdf-parse')).default;
+      const pdfParseModule = await import('pdf-parse');
+      // @ts-ignore - pdf-parse exports are not properly typed
+      const pdfParse = pdfParseModule.default || pdfParseModule;
       const data = await pdfParse(buffer);
       return { text: data.text || '', type: 'PDF' };
     } catch (error) {
