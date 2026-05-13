@@ -78,6 +78,39 @@ export default function EDIPage() {
     }
   }
 
+  async function uploadFile(file: File) {
+    try {
+      setStatus(`Uploading ${file.name}...`);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('version', version);
+      formData.append('txSet', txSet);
+      formData.append('carrier', carrier);
+      formData.append('notes', docNotes);
+
+      const response = await fetch(`${EDI_API_BASE}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const result = await response.json();
+      setDetectedTxSets(result.detectedTxSets ?? []);
+      setStatus(`${result.message}. Detected: ${result.detectedTxSets?.join(", ") || "none"}`);
+      setDocName("");
+      setDocNotes("");
+      setDocText("");
+      await loadKnowledge();
+      await loadRelevantDocs();
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void explain();
@@ -183,18 +216,26 @@ export default function EDIPage() {
             <label><span className="label">Notes</span><input className="input" value={docNotes} onChange={(e) => setDocNotes(e.target.value)} placeholder="Optional notes" /></label>
           </div>
           <label style={{ display: "block", marginTop: 16 }}>
-            <span className="label">Upload file (optional)</span>
+            <span className="label">Upload file (.pdf, .docx, .doc, .edi, .txt)</span>
             <input
               type="file"
               className="input"
-              accept=".txt,.edi,.csv,.pdf"
+              accept=".txt,.edi,.x12,.pdf,.doc,.docx"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setDocName(file.name);
-                  const text = await file.text();
-                  setDocText(text);
-                  setStatus(`File loaded: ${file.name} (${file.size.toLocaleString()} bytes)`);
+                  const ext = file.name.toLowerCase().split('.').pop();
+
+                  // For PDF and Word files, use upload API
+                  if (ext === 'pdf' || ext === 'doc' || ext === 'docx') {
+                    await uploadFile(file);
+                  } else {
+                    // For text/EDI files, read directly
+                    const text = await file.text();
+                    setDocText(text);
+                    setStatus(`File loaded: ${file.name} (${file.size.toLocaleString()} bytes)`);
+                  }
                 }
               }}
             />
