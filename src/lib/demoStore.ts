@@ -1,15 +1,12 @@
-import { Redis } from "@upstash/redis";
+import { neon } from "@neondatabase/serverless";
 
-// Use Redis when environment variables are available (production)
+// Use Postgres when environment variable is available (production)
 // Fall back to local file storage for development
-const useRedis = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+const usePostgres = !!process.env.POSTGRES_URL;
 
-let redis: Redis | null = null;
-if (useRedis) {
-  redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-  });
+let sql: ReturnType<typeof neon> | null = null;
+if (usePostgres) {
+  sql = neon(process.env.POSTGRES_URL!);
 }
 
 // Fallback to file system for local development
@@ -18,7 +15,7 @@ import path from "path";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const STORE_PATH = path.join(DATA_DIR, "otmos-demo-store.json");
-const REDIS_KEY = "otmos-demo-store";
+const TABLE_NAME = "otmos_store";
 
 export type DemoStore = {
   qa: {
@@ -58,18 +55,48 @@ const defaultStore: DemoStore = {
   },
 };
 
+async function initializeDatabase() {
+  if (!sql) return;
+
+  try {
+    // Create table if it doesn't exist
+    await sql`
+      CREATE TABLE IF NOT EXISTS ${sql(TABLE_NAME)} (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        data JSONB NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+
+    // Check if we have any data
+    const result = await sql`SELECT data FROM ${sql(TABLE_NAME)} WHERE id = 1`;
+    if (result.length === 0) {
+      // Insert default store
+      await sql`
+        INSERT INTO ${sql(TABLE_NAME)} (id, data)
+        VALUES (1, ${JSON.stringify(defaultStore)}::jsonb)
+      `;
+    }
+  } catch (error) {
+    console.error("Database initialization error:", error);
+  }
+}
+
 export async function loadStore(): Promise<DemoStore> {
-  // Try Redis first (production)
-  if (redis) {
+  // Try Postgres first (production)
+  if (sql) {
     try {
-      const stored = await redis.get<DemoStore>(REDIS_KEY);
-      if (stored) return stored;
+      await initializeDatabase();
+      const result = await sql`SELECT data FROM ${sql(TABLE_NAME)} WHERE id = 1`;
+      if (result.length > 0 && result[0].data) {
+        return result[0].data as DemoStore;
+      }
 
       // Initialize with defaults if empty
       await saveStore(defaultStore);
       return structuredClone(defaultStore);
     } catch (error) {
-      console.error("Redis load error:", error);
+      console.error("Postgres load error:", error);
       // Fall through to file system
     }
   }
@@ -86,12 +113,17 @@ export async function loadStore(): Promise<DemoStore> {
 }
 
 export async function saveStore(store: DemoStore): Promise<void> {
-  // Save to Redis first (production)
-  if (redis) {
+  // Save to Postgres first (production)
+  if (sql) {
     try {
-      await redis.set(REDIS_KEY, store);
+      await sql`
+        INSERT INTO ${sql(TABLE_NAME)} (id, data, updated_at)
+        VALUES (1, ${JSON.stringify(store)}::jsonb, NOW())
+        ON CONFLICT (id)
+        DO UPDATE SET data = ${JSON.stringify(store)}::jsonb, updated_at = NOW()
+      `;
     } catch (error) {
-      console.error("Redis save error:", error);
+      console.error("Postgres save error:", error);
       // Continue to save to file system as backup
     }
   }
