@@ -59,9 +59,9 @@ async function initializeDatabase() {
   if (!sql) return;
 
   try {
-    // Create table if it doesn't exist
+    // Create table if it doesn't exist (using string interpolation for table name)
     await sql`
-      CREATE TABLE IF NOT EXISTS ${sql(TABLE_NAME)} (
+      CREATE TABLE IF NOT EXISTS otmos_store (
         id INTEGER PRIMARY KEY DEFAULT 1,
         data JSONB NOT NULL,
         updated_at TIMESTAMP DEFAULT NOW()
@@ -69,11 +69,11 @@ async function initializeDatabase() {
     `;
 
     // Check if we have any data
-    const result = await sql`SELECT data FROM ${sql(TABLE_NAME)} WHERE id = 1`;
+    const result = await sql`SELECT data FROM otmos_store WHERE id = 1`;
     if (result.length === 0) {
       // Insert default store
       await sql`
-        INSERT INTO ${sql(TABLE_NAME)} (id, data)
+        INSERT INTO otmos_store (id, data)
         VALUES (1, ${JSON.stringify(defaultStore)}::jsonb)
       `;
     }
@@ -87,7 +87,7 @@ export async function loadStore(): Promise<DemoStore> {
   if (sql) {
     try {
       await initializeDatabase();
-      const result = await sql`SELECT data FROM ${sql(TABLE_NAME)} WHERE id = 1`;
+      const result = await sql`SELECT data FROM otmos_store WHERE id = 1`;
       if (result.length > 0 && result[0].data) {
         return result[0].data as DemoStore;
       }
@@ -117,7 +117,7 @@ export async function saveStore(store: DemoStore): Promise<void> {
   if (sql) {
     try {
       await sql`
-        INSERT INTO ${sql(TABLE_NAME)} (id, data, updated_at)
+        INSERT INTO otmos_store (id, data, updated_at)
         VALUES (1, ${JSON.stringify(store)}::jsonb, NOW())
         ON CONFLICT (id)
         DO UPDATE SET data = ${JSON.stringify(store)}::jsonb, updated_at = NOW()
