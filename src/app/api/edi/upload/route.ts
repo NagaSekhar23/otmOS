@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { loadStore, saveStore } from "@/lib/demoStore";
-// @ts-ignore - pdf-parse doesn't have proper TypeScript definitions
-import pdf from "pdf-parse";
 import mammoth from "mammoth";
 
 function detectTxSetsFromFilename(filename: string): string[] {
@@ -62,7 +60,9 @@ async function extractTextFromFile(file: File, buffer: Buffer): Promise<{ text: 
   // PDF files
   if (filename.endsWith('.pdf')) {
     try {
-      const data = await pdf(buffer);
+      // Dynamic import to avoid ESM issues
+      const pdfParse = (await import('pdf-parse')).default;
+      const data = await pdfParse(buffer);
       return { text: data.text || '', type: 'PDF' };
     } catch (error) {
       console.error('PDF parsing error:', error);
