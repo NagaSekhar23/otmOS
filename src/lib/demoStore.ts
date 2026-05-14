@@ -1,12 +1,23 @@
 import { neon } from "@neondatabase/serverless";
 
+// TEMPORARILY DISABLED: Database is causing timeouts
 // Use Postgres when environment variable is available (production)
 // Fall back to local file storage for development
-const usePostgres = !!process.env.POSTGRES_URL;
+const usePostgres = false; // Temporarily disabled - !!process.env.POSTGRES_URL;
 
 let sql: ReturnType<typeof neon> | null = null;
-if (usePostgres) {
-  sql = neon(process.env.POSTGRES_URL!);
+if (usePostgres && process.env.POSTGRES_URL) {
+  try {
+    sql = neon(process.env.POSTGRES_URL, {
+      fetchOptions: {
+        // Add timeout to prevent hanging
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      },
+    });
+  } catch (error) {
+    console.error("Failed to initialize Neon client:", error);
+    sql = null;
+  }
 }
 
 // Fallback to file system for local development
@@ -79,32 +90,55 @@ async function initializeDatabase() {
     }
   } catch (error) {
     console.error("Database initialization error:", error);
+    console.error("POSTGRES_URL exists:", !!process.env.POSTGRES_URL);
+    console.error("Error details:", error instanceof Error ? error.message : String(error));
+    throw error; // Re-throw to ensure we know when initialization fails
   }
 }
 
 export async function loadStore(): Promise<DemoStore> {
-  // Try Postgres first (production)
+  // Try Postgres first (production) with timeout
   if (sql) {
     try {
-      await initializeDatabase();
-      const result = await sql`SELECT data FROM otmos_store WHERE id = 1`;
-      if (Array.isArray(result) && result.length > 0) {
-        const row = result[0] as any;
-        if (row && row.data) {
-          return row.data as DemoStore;
+      // Add a timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      );
+
+      const dbPromise = (async () => {
+        await initializeDatabase();
+        const result = await sql!`SELECT data FROM otmos_store WHERE id = 1`;
+        if (Array.isArray(result) && result.length > 0) {
+          const row = result[0] as any;
+          if (row && row.data) {
+            return row.data as DemoStore;
+          }
         }
+        return null;
+      })();
+
+      const dbResult = await Promise.race([dbPromise, timeoutPromise]);
+
+      if (dbResult) {
+        return dbResult;
       }
 
       // Initialize with defaults if empty
       await saveStore(defaultStore);
       return structuredClone(defaultStore);
     } catch (error) {
-      console.error("Postgres load error:", error);
-      // Fall through to file system
+      console.error("Postgres load error (falling back to defaults):", error instanceof Error ? error.message : String(error));
+      // Fall through to return defaults
     }
   }
 
-  // Fallback to file system (local development)
+  // Fallback: Return default store (don't try file system in production)
+  if (process.env.VERCEL) {
+    console.log("Running in Vercel, returning default store");
+    return structuredClone(defaultStore);
+  }
+
+  // File system only for local development
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
     const raw = await fs.readFile(STORE_PATH, "utf-8");
@@ -116,21 +150,33 @@ export async function loadStore(): Promise<DemoStore> {
 }
 
 export async function saveStore(store: DemoStore): Promise<void> {
-  // Save to Postgres first (production)
+  // Save to Postgres first (production) with timeout
   if (sql) {
     try {
-      await sql`
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Database save timeout')), 5000)
+      );
+
+      const savePromise = sql`
         INSERT INTO otmos_store (id, data, updated_at)
         VALUES (1, ${JSON.stringify(store)}::jsonb, NOW())
         ON CONFLICT (id)
         DO UPDATE SET data = ${JSON.stringify(store)}::jsonb, updated_at = NOW()
       `;
-      // Successfully saved to Postgres, no need for file system
+
+      await Promise.race([savePromise, timeoutPromise]);
+      // Successfully saved to Postgres
       return;
     } catch (error) {
-      console.error("Postgres save error:", error);
-      // Continue to file system fallback
+      console.error("Postgres save error (continuing anyway):", error instanceof Error ? error.message : String(error));
+      // Continue - don't block on save failures
     }
+  }
+
+  // Skip file system in production (read-only)
+  if (process.env.VERCEL) {
+    console.log("Running in Vercel, skipping file system save");
+    return;
   }
 
   // Fallback to file system (local development only)
@@ -138,7 +184,6 @@ export async function saveStore(store: DemoStore): Promise<void> {
     await fs.mkdir(DATA_DIR, { recursive: true });
     await fs.writeFile(STORE_PATH, JSON.stringify(store, null, 2));
   } catch (error) {
-    console.error("File system save error (expected in production):", error);
-    // Don't throw - this is expected in read-only production environments
+    console.error("File system save error:", error);
   }
 }

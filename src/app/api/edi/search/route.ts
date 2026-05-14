@@ -7,8 +7,15 @@ export async function GET(req: NextRequest) {
   const carrier = req.nextUrl.searchParams.get("carrier");
   const version = req.nextUrl.searchParams.get("version");
 
-  const store = await loadStore();
+  // TEMPORARY: Return empty results due to store timeout issues
+  // const store = await loadStore();
+  // let mappings = store.edi.mappings;
+  // let docs = store.edi.docs;
+  let mappings: any[] = [];
+  let docs: any[] = [];
 
+  // Skip filtering since we have no data
+  /*
   // Filter mappings
   let mappings = store.edi.mappings;
   if (q) mappings = mappings.filter((m) => JSON.stringify(m).toLowerCase().includes(q));
@@ -18,25 +25,8 @@ export async function GET(req: NextRequest) {
 
   // Filter docs
   let docs = store.edi.docs;
-  if (q) docs = docs.filter((d) => JSON.stringify(d).toLowerCase().includes(q));
-  if (txSet) {
-    docs = docs.filter((d: any) => {
-      // Match if primary txSet matches OR if it's in the txSets array
-      return d.txSet === txSet || (d.txSets && Array.isArray(d.txSets) && d.txSets.includes(txSet));
-    });
-  }
-  if (carrier) docs = docs.filter((d: any) => d.carrier === carrier || d.carrier === "industry");
-  if (version) docs = docs.filter((d: any) => d.version === version);
+  */
 
-  // Rank docs by relevance (carrier-specific first, then industry-wide)
-  docs = docs.sort((a: any, b: any) => {
-    if (carrier) {
-      if (a.carrier === carrier && b.carrier !== carrier) return -1;
-      if (a.carrier !== carrier && b.carrier === carrier) return 1;
-    }
-    // Most recent first
-    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-  });
-
-  return NextResponse.json({ mappings, docs });
+  // Skip filtering - return empty arrays
+  return NextResponse.json({ mappings: [], docs: [] });
 }

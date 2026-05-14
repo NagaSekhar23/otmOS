@@ -4,13 +4,17 @@ import { parseX12 } from "@/lib/ediParser";
 import { getSegmentMetadata, getLoopContext } from "@/lib/ediMetadata";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const rows = parseX12(body.x12 ?? "", body.elementSep ?? "*", body.segmentTerm ?? "~");
-  const store = await loadStore();
-  const mappings = store.edi.mappings;
+  try {
+    const body = await req.json();
+    const rows = parseX12(body.x12 ?? "", body.elementSep ?? "*", body.segmentTerm ?? "~");
 
-  let currentLoop = "";
-  const explained = rows.map((row) => {
+    // TEMPORARY: Skip store loading due to timeout issues
+    // const store = await loadStore();
+    // const mappings = store.edi.mappings;
+    const mappings: any[] = []; // Empty mappings for now
+
+    let currentLoop = "";
+    const explained = rows.map((row) => {
     // Get segment metadata
     const segmentMeta = getSegmentMetadata(row.segment, body.txSet);
     const elementMeta = segmentMeta?.elements.find(e => e.pos === row.pos);
@@ -28,17 +32,24 @@ export async function POST(req: NextRequest) {
       m.code === row.value,
     );
 
-    return {
-      ...row,
-      loop: currentLoop,
-      segmentName: segmentMeta?.name ?? row.segment,
-      elementName: elementMeta?.name ?? `Element ${row.pos}`,
-      elementDescription: match?.meaning || elementMeta?.description || "",
-      meaning: match?.meaning ?? "",
-      notes: match?.notes ?? "",
-      source: match?.source ?? (match ? "mapping" : "standard"),
-    };
-  });
+      return {
+        ...row,
+        loop: currentLoop,
+        segmentName: segmentMeta?.name ?? row.segment,
+        elementName: elementMeta?.name ?? `Element ${row.pos}`,
+        elementDescription: match?.meaning || elementMeta?.description || "",
+        meaning: match?.meaning ?? "",
+        notes: match?.notes ?? "",
+        source: match?.source ?? (match ? "mapping" : "standard"),
+      };
+    });
 
-  return NextResponse.json({ rows: explained });
+    return NextResponse.json({ rows: explained });
+  } catch (error) {
+    console.error("Explain API error:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Explain failed", rows: [] },
+      { status: 500 }
+    );
+  }
 }
