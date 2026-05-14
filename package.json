@@ -16,7 +16,8 @@
     "node-fetch": "^2.7.0",
     "pdf-parse": "^2.4.5",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "xml-js": "^1.6.11"
   },
   "devDependencies": {
     "@types/node": "^20",

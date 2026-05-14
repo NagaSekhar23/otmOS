@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Oracle OTM Order",
+  "description": "Oracle Transportation Management Order object",
+  "type": "object",
+  "properties": {
+    "Order": {
+      "type": "object",
+      "properties": {
+        "orderGid": {
+          "type": "string",
+          "description": "Global ID for the order"
+        },
+        "orderXid": {
+          "type": "string",
+          "description": "External ID for the order"
+        },
+        "orderReleaseGid": {
+          "type": "string",
+          "description": "Order release reference"
+        },
+        "totalCost": {
+          "type": "object",
+          "properties": {
+            "costAmount": {
+              "type": "number"
+            },
+            "currencyCode": {
+              "type": "string"
+            }
+          }
+        },
+        "totalWeight": {
+          "type": "object",
+          "properties": {
+            "weightValue": {
+              "type": "number"
+            },
+            "weightUom": {
+              "type": "string"
+            }
+          }
+        },
+        "totalVolume": {
+          "type": "object",
+          "properties": {
+            "volumeValue": {
+              "type": "number"
+            },
+            "volumeUom": {
+              "type": "string"
+            }
+          }
+        },
+        "orderRefnums": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "orderRefnumGid": {
+                "type": "string"
+              },
+              "orderRefnumQualGid": {
+                "type": "string"
+              },
+              "orderRefnumValue": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "sourceLocationGid": {
+          "type": "string",
+          "description": "Source/origin location"
+        },
+        "destLocationGid": {
+          "type": "string",
+          "description": "Destination location"
+        },
+        "earlyPickupDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "latePickupDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "earlyDeliveryDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lateDeliveryDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "orderLines": {
+          "type": "array",
+          "description": "Order line items",
+          "items": {
+            "type": "object",
+            "properties": {
+              "orderLineGid": {
+                "type": "string"
+              },
+              "lineNumber": {
+                "type": "integer"
+              },
+              "itemGid": {
+                "type": "string"
+              },
+              "orderedQuantity": {
+                "type": "number"
+              },
+              "quantityUom": {
+                "type": "string"
+              },
+              "packagedItemGid": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "transportMode": {
+          "type": "string",
+          "description": "TL, LTL, PARCEL, AIR, OCEAN, RAIL"
+        },
+        "serviceLevel": {
+          "type": "string",
+          "description": "Service level required"
+        }
+      },
+      "required": ["orderGid", "sourceLocationGid", "destLocationGid"]
+    }
+  }
+}

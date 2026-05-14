@@ -22,6 +22,12 @@ export default function IntegrationToolsHome() {
           <li>
             <Link href="/integration/jsonpath-generator">JSONPath Generator</Link> — paste JSON and browse generated JSONPath paths
           </li>
+          <li>
+            <Link href="/integration/sample-generator">Sample Generator</Link> — generate Oracle OTM sample JSON/XML
+          </li>
+          <li>
+            <Link href="/integration/converter">XML ↔ JSON Converter</Link> — convert between XML and JSON formats
+          </li>
         </ul>
       </section>
 

@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Oracle OTM Shipment",
+  "description": "Oracle Transportation Management Shipment object",
+  "type": "object",
+  "properties": {
+    "Shipment": {
+      "type": "object",
+      "properties": {
+        "shipmentGid": {
+          "type": "string",
+          "description": "Global ID for the shipment"
+        },
+        "shipmentXid": {
+          "type": "string",
+          "description": "External ID for the shipment"
+        },
+        "transportationPlanGid": {
+          "type": "string",
+          "description": "Transportation plan reference"
+        },
+        "totalCost": {
+          "type": "object",
+          "properties": {
+            "costAmount": {
+              "type": "number",
+              "description": "Total cost amount"
+            },
+            "currencyCode": {
+              "type": "string",
+              "description": "Currency code (USD, EUR, etc.)"
+            }
+          }
+        },
+        "totalWeight": {
+          "type": "object",
+          "properties": {
+            "weightValue": {
+              "type": "number",
+              "description": "Weight value"
+            },
+            "weightUom": {
+              "type": "string",
+              "description": "Weight unit (LB, KG, etc.)"
+            }
+          }
+        },
+        "totalVolume": {
+          "type": "object",
+          "properties": {
+            "volumeValue": {
+              "type": "number",
+              "description": "Volume value"
+            },
+            "volumeUom": {
+              "type": "string",
+              "description": "Volume unit (CF, CM, etc.)"
+            }
+          }
+        },
+        "shipmentRefnums": {
+          "type": "array",
+          "description": "Reference numbers",
+          "items": {
+            "type": "object",
+            "properties": {
+              "shipmentRefnumGid": {
+                "type": "string"
+              },
+              "shipmentRefnumQualGid": {
+                "type": "string",
+                "description": "Reference number qualifier"
+              },
+              "shipmentRefnumValue": {
+                "type": "string",
+                "description": "Reference number value"
+              }
+            }
+          }
+        },
+        "shipmentStatusType": {
+          "type": "string",
+          "description": "Status: PENDING, TENDERED, ACCEPTED, DECLINED, IN_TRANSIT, DELIVERED, CANCELLED"
+        },
+        "transportMode": {
+          "type": "string",
+          "description": "Transport mode: TL, LTL, PARCEL, AIR, OCEAN, RAIL, INTERMODAL"
+        },
+        "serviceProvider": {
+          "type": "object",
+          "properties": {
+            "serviceProviderGid": {
+              "type": "string"
+            },
+            "serviceProviderXid": {
+              "type": "string"
+            }
+          }
+        },
+        "shipmentStops": {
+          "type": "array",
+          "description": "List of stops (pickup/delivery)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "shipmentStopGid": {
+                "type": "string"
+              },
+              "stopSequenceNum": {
+                "type": "integer"
+              },
+              "stopType": {
+                "type": "string",
+                "description": "PICKUP or DELIVERY"
+              },
+              "locationGid": {
+                "type": "string"
+              },
+              "earlyDateTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lateDateTime": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "shipmentRemarks": {
+          "type": "array",
+          "description": "Additional remarks/notes",
+          "items": {
+            "type": "object",
+            "properties": {
+              "remarkText": {
+                "type": "string"
+              },
+              "remarkQualifierGid": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "required": ["shipmentGid", "transportMode"]
+    }
+  }
+}
