@@ -3,50 +3,14 @@
 import { useMemo, useState } from "react";
 import Ajv from "ajv";
 import Shell from "@/components/Shell";
+import { OTM_SCHEMAS, OTM_DOCS_URL } from "@/lib/otmSchemas";
 
 type Mode = "format" | "schema";
 
-const SAMPLE_SCHEMA = JSON.stringify(
-  {
-    $schema: "http://json-schema.org/draft-07/schema#",
-    type: "object",
-    required: ["shipmentId", "weight", "origin"],
-    properties: {
-      shipmentId: { type: "string", description: "Unique shipment identifier" },
-      weight: {
-        type: "number",
-        minimum: 0,
-        description: "Total weight in pounds",
-      },
-      origin: {
-        type: "object",
-        required: ["city", "country"],
-        properties: {
-          city: { type: "string" },
-          country: { type: "string", minLength: 2, maxLength: 2 },
-        },
-      },
-      tags: { type: "array", items: { type: "string" } },
-    },
-    additionalProperties: false,
-  },
-  null,
-  2
-);
-
-const SAMPLE_DATA = JSON.stringify(
-  {
-    shipmentId: "SHIP-001",
-    weight: 500,
-    origin: { city: "Chicago", country: "US" },
-    tags: ["express", "fragile"],
-  },
-  null,
-  2
-);
-
 const INITIAL_JSON =
   '{\n  "hello": "world",\n  "items": [\n    { "id": 1, "name": "A" },\n    { "id": 2, "name": "B" }\n  ]\n}\n';
+
+const OTM_OBJECT_KEYS = Object.keys(OTM_SCHEMAS);
 
 export default function JsonValidatorPage() {
   const [mode, setMode] = useState<Mode>("format");
@@ -56,8 +20,9 @@ export default function JsonValidatorPage() {
   const [pretty, setPretty] = useState(true);
 
   // Schema mode state
-  const [schemaText, setSchemaText] = useState<string>(SAMPLE_SCHEMA);
-  const [dataText, setDataText] = useState<string>(SAMPLE_DATA);
+  const [selectedOtmKey, setSelectedOtmKey] = useState<string>("");
+  const [schemaText, setSchemaText] = useState<string>("");
+  const [dataText, setDataText] = useState<string>("");
 
   // Format mode: parse result
   const parsed = useMemo(() => {
@@ -82,8 +47,8 @@ export default function JsonValidatorPage() {
 
   // Schema mode: validation result
   const schemaResult = useMemo(() => {
-    if (!schemaText.trim()) return { state: "idle" as const, message: "Paste a JSON Schema." };
-    if (!dataText.trim()) return { state: "idle" as const, message: "Paste JSON data to validate." };
+    if (!schemaText.trim()) return { state: "idle" as const, message: "Select an OTM schema or paste a JSON Schema." };
+    if (!dataText.trim()) return { state: "idle" as const, message: "Load the sample or paste JSON data to validate." };
 
     let schema: unknown;
     try {
@@ -113,8 +78,29 @@ export default function JsonValidatorPage() {
     }
   }, [schemaText, dataText]);
 
+  function loadOtmSchema(key: string) {
+    setSelectedOtmKey(key);
+    if (!key) return;
+    const entry = OTM_SCHEMAS[key];
+    setSchemaText(JSON.stringify(entry.schema, null, 2));
+    setDataText(JSON.stringify(entry.sample, null, 2));
+  }
+
   return (
     <Shell title="JSON Validator">
+      {/* Oracle docs link */}
+      <div style={{ marginBottom: 14, fontSize: 13 }}>
+        <span className="muted">Reference: </span>
+        <a
+          href={OTM_DOCS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "var(--accent, #e05a2b)", textDecoration: "underline" }}
+        >
+          Oracle OTM REST API Documentation ↗
+        </a>
+      </div>
+
       {/* Mode tabs */}
       <div className="toolbar" style={{ marginBottom: 12, gap: 0 }}>
         <button
@@ -138,7 +124,7 @@ export default function JsonValidatorPage() {
           <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
             <div>
               <div style={{ fontWeight: 600 }}>{parsed.ok ? "✅" : "⚠️"} {parsed.message}</div>
-              <div className="muted" style={{ marginTop: 6 }}>Validates JSON and pretty-prints.</div>
+              <div className="muted" style={{ marginTop: 6 }}>Validates JSON syntax and pretty-prints.</div>
             </div>
             <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <input type="checkbox" checked={pretty} onChange={(e) => setPretty(e.target.checked)} />
@@ -156,6 +142,34 @@ export default function JsonValidatorPage() {
 
       {mode === "schema" && (
         <>
+          {/* OTM schema selector */}
+          <section className="card" style={{ marginBottom: 12 }}>
+            <div className="toolbar" style={{ flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+              <div>
+                <div className="label" style={{ marginBottom: 6 }}>Load OTM Schema</div>
+                <div className="toolbar" style={{ gap: 8, flexWrap: "wrap" }}>
+                  {OTM_OBJECT_KEYS.map((key) => (
+                    <button
+                      key={key}
+                      className={`btn${selectedOtmKey === key ? " primary" : ""}`}
+                      onClick={() => loadOtmSchema(key)}
+                    >
+                      {OTM_SCHEMAS[key].label}
+                    </button>
+                  ))}
+                  {selectedOtmKey && (
+                    <button
+                      className="btn"
+                      onClick={() => { setSelectedOtmKey(""); setSchemaText(""); setDataText(""); }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
           <div className="grid2" style={{ alignItems: "start" }}>
             {/* Schema pane */}
             <section className="card">
@@ -166,10 +180,10 @@ export default function JsonValidatorPage() {
               <textarea
                 className="textarea mono"
                 value={schemaText}
-                onChange={(e) => setSchemaText(e.target.value)}
+                onChange={(e) => { setSchemaText(e.target.value); setSelectedOtmKey(""); }}
                 spellCheck={false}
                 style={{ minHeight: "52vh", resize: "vertical" }}
-                placeholder="Paste your JSON Schema here..."
+                placeholder="Select an OTM object above or paste a custom JSON Schema..."
               />
             </section>
 
@@ -188,7 +202,7 @@ export default function JsonValidatorPage() {
                 onChange={(e) => setDataText(e.target.value)}
                 spellCheck={false}
                 style={{ minHeight: "52vh", resize: "vertical" }}
-                placeholder="Paste JSON data to validate..."
+                placeholder="Select an OTM schema above to auto-load a sample, or paste JSON data..."
               />
             </section>
           </div>
@@ -223,7 +237,8 @@ export default function JsonValidatorPage() {
                     {schemaResult.errors.map((err, i) => (
                       <tr key={i} style={{ borderBottom: "1px solid var(--border, #f3f4f6)" }}>
                         <td style={{ padding: "6px 8px", fontFamily: "var(--font-geist-mono)", color: "var(--muted, #6b7280)" }}>
-                          {(err as { dataPath?: string }).dataPath || "(root)"}
+                          {(err as { dataPath?: string; instancePath?: string }).instancePath ||
+                            (err as { dataPath?: string }).dataPath || "(root)"}
                         </td>
                         <td style={{ padding: "6px 8px" }}>{err.message}</td>
                         <td style={{ padding: "6px 8px" }}>

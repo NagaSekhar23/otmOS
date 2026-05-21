@@ -21,10 +21,46 @@ const XML_SAMPLE = `<?xml version="1.0" encoding="UTF-8"?>
         <Xid>ORDER_NUM</Xid>
       </Gid>
     </ShipmentRefnumQualGid>
-    <ShipmentRefnumValue>ORD-2024-001</ShipmentRefnumValue>
+    <ShipmentRefnumValue>PO-2024-00123</ShipmentRefnumValue>
   </ShipmentRefnum>
   <TotalWeightUom>LB</TotalWeightUom>
-  <TotalWeightCount>500</TotalWeightCount>
+  <TotalWeightCount>4500</TotalWeightCount>
+  <TotalVolumeCount>120</TotalVolumeCount>
+  <TotalVolumeUom>CF</TotalVolumeUom>
+  <TransportMode>TL</TransportMode>
+  <ShipmentStatusType>IN_TRANSIT</ShipmentStatusType>
+  <ServiceProvider>
+    <ServiceProviderGid>
+      <Gid>
+        <DomainName>DOMAIN</DomainName>
+        <Xid>CARRIER-FedEx</Xid>
+      </Gid>
+    </ServiceProviderGid>
+  </ServiceProvider>
+  <ShipmentStop>
+    <StopSequenceNum>1</StopSequenceNum>
+    <StopType>PICKUP</StopType>
+    <LocationGid>
+      <Gid>
+        <DomainName>DOMAIN</DomainName>
+        <Xid>LOC-CHICAGO-WH</Xid>
+      </Gid>
+    </LocationGid>
+    <EarlyDateTime>2026-05-21 08:00:00</EarlyDateTime>
+    <LateDateTime>2026-05-21 12:00:00</LateDateTime>
+  </ShipmentStop>
+  <ShipmentStop>
+    <StopSequenceNum>2</StopSequenceNum>
+    <StopType>DELIVERY</StopType>
+    <LocationGid>
+      <Gid>
+        <DomainName>DOMAIN</DomainName>
+        <Xid>LOC-NYC-DC</Xid>
+      </Gid>
+    </LocationGid>
+    <EarlyDateTime>2026-05-23 08:00:00</EarlyDateTime>
+    <LateDateTime>2026-05-23 17:00:00</LateDateTime>
+  </ShipmentStop>
 </Shipment>`;
 
 const JSON_SAMPLE = JSON.stringify({
@@ -35,8 +71,27 @@ const JSON_SAMPLE = JSON.stringify({
         Xid: { _text: "SHIP-001" },
       },
     },
+    ShipmentRefnum: {
+      ShipmentRefnumQualGid: {
+        Gid: {
+          DomainName: { _text: "DOMAIN" },
+          Xid: { _text: "ORDER_NUM" },
+        },
+      },
+      ShipmentRefnumValue: { _text: "PO-2024-00123" },
+    },
+    TotalWeightCount: { _text: "4500" },
     TotalWeightUom: { _text: "LB" },
-    TotalWeightCount: { _text: "500" },
+    TransportMode: { _text: "TL" },
+    ShipmentStatusType: { _text: "IN_TRANSIT" },
+    ServiceProvider: {
+      ServiceProviderGid: {
+        Gid: {
+          DomainName: { _text: "DOMAIN" },
+          Xid: { _text: "CARRIER-FedEx" },
+        },
+      },
+    },
   },
 }, null, 2);
 
