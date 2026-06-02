@@ -8,6 +8,7 @@ const nav = [
   { href: "/integration", label: "Integration Tools" },
   { href: "/database", label: "Database Tools" },
   { href: "/qa", label: "OTM QA" },
+  { href: "/agents", label: "Agents" },
 ];
 
 export default function Shell({ title, children }: { title: string; children: ReactNode }) {
