@@ -136,9 +136,45 @@ export async function parseCsv(file: File): Promise<AgentWorkflow> {
   });
 }
 
+async function parseZip(file: File): Promise<AgentWorkflow> {
+  const JSZip = (await import("jszip")).default;
+  const buf = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+
+  // Collect candidate files — prefer xlsx > xls > csv, skip macOS artifacts
+  type Candidate = { entry: import("jszip").JSZipObject; name: string; ext: string };
+  const candidates: Candidate[] = [];
+
+  zip.forEach((relativePath, entry) => {
+    if (entry.dir) return;
+    if (relativePath.startsWith("__MACOSX/")) return;
+    const name = relativePath.split("/").pop() ?? "";
+    if (name.startsWith(".")) return;
+    const ext = (name.split(".").pop() ?? "").toLowerCase();
+    if (["xlsx", "xls", "csv"].includes(ext)) {
+      candidates.push({ entry, name, ext });
+    }
+  });
+
+  if (candidates.length === 0) {
+    throw new Error("No Excel or CSV files found inside the ZIP archive. Please include a .xlsx or .csv agent file.");
+  }
+
+  const priority = (ext: string) => (ext === "xlsx" ? 0 : ext === "xls" ? 1 : 2);
+  candidates.sort((a, b) => priority(a.ext) - priority(b.ext));
+
+  const { entry, name, ext } = candidates[0];
+  const content = await entry.async("arraybuffer");
+  const inner = new File([content], name);
+
+  if (ext === "xlsx" || ext === "xls") return parseXlsx(inner);
+  return parseCsv(inner);
+}
+
 export async function parseAgentFile(file: File): Promise<AgentWorkflow> {
   const ext = (file.name.split(".").pop() ?? "").toLowerCase();
   if (ext === "xlsx" || ext === "xls") return parseXlsx(file);
   if (ext === "csv") return parseCsv(file);
-  throw new Error(`Unsupported file type: .${ext} — use .xlsx or .csv`);
+  if (ext === "zip") return parseZip(file);
+  throw new Error(`Unsupported file type: .${ext} — use .xlsx, .csv, or .zip`);
 }
